@@ -115,49 +115,23 @@ int main() {
             dup2(fdout, 1);
             dup2(fderr, 2);
 
-            printf("in child pid = %d\n",getpid());
-            fflush(stdout);
-            struct nlist *node = lookup(getpid());
-
-
-            if(node == NULL){
-                fprintf(stderr,"node is null\n");
-                exit(2);
-            }
-
             char *argument_list[10];    
             int i = 0;
-            printf("about to strtok = %d\n",getpid());
             fflush(stdout);
-            //TODO find why this line causes a segmentation error
-            char* command = strdup(node->command);
-            printf("we have the command = %d\n",getpid());
-            fflush(stdout);
-            //char *p = strtok(command," ");
-            printf("about to enter while loop = %d\n",getpid());
-            fflush(stdout);
-           // while (p != NULL)
-           // {
-            //    argument_list[i++] = p;
-           //     p = strtok (NULL, " ");
-           // }
-            printf("finish strtok = %d\n",getpid());
-            fflush(stdout);
-           // argument_list[i] = NULL;
+            char* Ccommand = strdup(command);
+            char *p = strtok(Ccommand," ");
+            while (p != NULL){
+                argument_list[i++] = p;
+                p = strtok (NULL, " ");
+            }
+            argument_list[i] = NULL;
 
-            int t = 0;
-
-           // while (argument_list[t]!=NULL){
-           //     printf("%s ", argument_list[t++]);
-          //      fflush(stdout);
-          //  }
-          //  printf("\n");
-          //  int result = execvp(argument_list[0], argument_list);
+            int result = execvp(argument_list[0], argument_list);
 
             //Error process
-          //  if (result != 0){ 
-          //      exit(2);
-         //   }
+            if (result != 0){ 
+                exit(2);
+            }
             exit(0);
         } else if (pid > 0) {  /* parent goes to the next node */
             //insert the new pid into the hash table
