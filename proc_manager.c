@@ -95,7 +95,6 @@ int main() {
     int index = 0;
     clock_t t;
     t = clock();
-    ssize_t lineSize;
     size_t len = 100;
     char* command = (char*) malloc(sizeof (char)*len);
     while ( getline(&command, &len, stdin) != -1) {
@@ -118,6 +117,8 @@ int main() {
             char *argument_list[10];    
             int i = 0;
             fflush(stdout);
+
+
             char* Ccommand = strdup(command);
             char *p = strtok(Ccommand," ");
             while (p != NULL){
@@ -125,6 +126,8 @@ int main() {
                 p = strtok (NULL, " ");
             }
             argument_list[i] = NULL;
+
+            free(Ccommand);
 
             int result = execvp(argument_list[0], argument_list);
 
@@ -162,17 +165,81 @@ int main() {
         struct nlist *node = lookup(pidChild);
         clock_gettime(CLOCK_MONOTONIC, &node->finish);
         double elapsed = (node->finish.tv_sec-node->start.tv_sec);
-        printf("fun() took %f seconds to execute \n", elapsed);
-        fflush(NULL);
         printf("Ending command INDEX %d: child PID %d of parent PPID %d.\n", node->index,node->pid, getpid());
+        fflush(NULL);
+        printf("Finished at %ld, runtime duration = %f \n", node->finish.tv_sec,elapsed);
         fflush(NULL);
         if (WIFEXITED(status)) {
             fprintf(stderr, "Exited with exitcode = %d\n", WEXITSTATUS(status));
         } else if (WIFSIGNALED(status)) {
             fprintf(stderr, "Killed with signal %d\n", WTERMSIG(status));  
+            elapsed = -1;
+            free(lookup(pidChild));
+        }
+        if (elapsed>2){
+            command = node->command;
+            index = 1;
+            struct timespec start;
+            clock_gettime(CLOCK_MONOTONIC, &start);
+            pid = fork();
+            if (pid < 0) {
+                fprintf(stderr, "error forking");
+                exit(2);
+            } else if (pid == 0) {/*child */
+                char fileO[10];
+                char fileE[10];
+                sprintf(fileO, "%d.out", getpid());
+                sprintf(fileE, "%d.err", getpid());
+                int fdout = open(fileO, O_RDWR|O_CREAT|O_APPEND,0777);
+                int fderr = open(fileE, O_RDWR|O_CREAT|O_APPEND,0777);
+                dup2(fdout, 1);
+                dup2(fderr, 2);
+
+                char *argument_list[10];    
+                int i = 0;
+                fflush(stdout);
+
+
+                char* Ccommand = strdup(command);
+                char *p = strtok(Ccommand," ");
+                while (p != NULL){
+                    argument_list[i++] = p;
+                    p = strtok (NULL, " ");
+                }
+                argument_list[i] = NULL;
+
+                free(Ccommand);
+
+                int result = execvp(argument_list[0], argument_list);
+
+                //Error process
+                if (result != 0){ 
+                    exit(2);
+                }
+                exit(0);
+            } else if (pid > 0) {  /* parent goes to the next node */
+                //insert the new pid into the hash table
+                struct nlist *entry_new = insert(command,pid,index);
+                clock_gettime(CLOCK_MONOTONIC, &entry_new->start);
+                char fileO[10];
+                char fileE[10];
+                sprintf(fileO, "%d.out", pid);
+                sprintf(fileE, "%d.err", pid);
+                int fdout = open(fileO, O_RDWR|O_CREAT|O_APPEND,0777);
+                int fderr = open(fileE, O_RDWR|O_CREAT|O_APPEND,0777);
+                dup2(fdout, 1);
+                dup2(fderr, 2);
+                printf("RESTARTING\n");
+                fprintf(stderr,"RESTARTING\n");
+                printf("Starting command INDEX %d: child PID %d of parent PPID %d.\n", entry_new->index, pid, getpid());
+                fflush(NULL);
+            }
+        }//End of Restart process
+        else if (elapsed>0){ //Process do not restart
+            fprintf(stderr,"spawning too fast\n");
+            free(lookup(pidChild));
         }
     }
-
 
     return 0;
 }
