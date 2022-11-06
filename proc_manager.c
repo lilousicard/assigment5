@@ -13,6 +13,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/fcntl.h>
+#include <sys/wait.h>
 #include <signal.h>
 
 struct nlist { /* table entry: */
@@ -93,8 +94,6 @@ implementation. **/
 int main() {
     int pid;
     int index = 0;
-    clock_t t;
-    t = clock();
     size_t len = 100;
     char* command = (char*) malloc(sizeof (char)*len);
     while ( getline(&command, &len, stdin) != -1) {
@@ -174,6 +173,7 @@ int main() {
         } else if (WIFSIGNALED(status)) {
             fprintf(stderr, "Killed with signal %d\n", WTERMSIG(status));  
             elapsed = -1;
+            free(lookup(pidChild)->command);
             free(lookup(pidChild));
         }
         if (elapsed>2){
@@ -237,9 +237,12 @@ int main() {
         }//End of Restart process
         else if (elapsed>0){ //Process do not restart
             fprintf(stderr,"spawning too fast\n");
+	    free(lookup(pidChild)->command);
             free(lookup(pidChild));
         }
     }
+
+    free(command);
 
     return 0;
 }
