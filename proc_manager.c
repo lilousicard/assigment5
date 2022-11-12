@@ -177,8 +177,11 @@ int main() {
             free(lookup(pidChild));
         }
         if (elapsed>2){
-            command = node->command;
+            char *Rcommand = strdup(node->command);
             index = 1;
+	    //free terminated node
+	    free(node->command);
+	    free(node);
             struct timespec start;
             clock_gettime(CLOCK_MONOTONIC, &start);
             pid = fork();
@@ -200,7 +203,8 @@ int main() {
                 fflush(stdout);
 
 
-                char* Ccommand = strdup(command);
+                char* Ccommand = strdup(Rcommand);
+		free(Rcommand);
                 char *p = strtok(Ccommand," ");
                 while (p != NULL){
                     argument_list[i++] = p;
@@ -243,6 +247,7 @@ int main() {
     }
 
     free(command);
+    
 
     return 0;
 }
