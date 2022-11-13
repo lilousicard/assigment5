@@ -3,7 +3,7 @@
  * in various file.
  * Author name: Lilou Sicard-Noel
  * Author email: lilou.sicard-noel@sjsu.edu
- * Last modified date: 11/12/2022
+ * Last modified date: 10/12/2022
  * Creation date: 11/04/2022
  * GitHub Repo : https://github.com/lilousicard/assigment5
  **/
@@ -75,20 +75,6 @@ struct nlist *insert(char *command, int pid, int index)
     }
     return np;
 }
-/** You might need to duplicate the command string to ensure you
-don't overwrite the previous command each time a new line is read
-from the input file.
-Or you might not need to duplicate it. It depends on your
-implementation. **/
-
-//char *strdup(char *s) /* make a duplicate of s */
-//{
-//    char *p;
-//    p = (char *) malloc(strlen(s)+1); /* +1 for  */
-//    if (p != NULL)
-//        strcpy(p, s);
-//    return p;
-//}
 
 
 int main() {
@@ -112,7 +98,7 @@ int main() {
             int fderr = open(fileE, O_RDWR|O_CREAT|O_APPEND,0777);
             dup2(fdout, 1);
             dup2(fderr, 2);
-            printf("%s\n", command);
+
             char *argument_list[10];    
             int i = 0;
             fflush(stdout);
@@ -171,12 +157,19 @@ int main() {
         char *Rcommand;
         if (WIFEXITED(status)) {
             fprintf(stderr, "Exited with exitcode = %d\n", WEXITSTATUS(status));
-            if(elapsed>2) Rcommand = strdup(node->command);
+	    if(elapsed>2) {
+		Rcommand = strdup(node->command);}
+	    else if (Rcommand != NULL){
+		free(Rcommand);	  
+	    }
             free(node->command);
             free(node);
         } else if (WIFSIGNALED(status)) {
             fprintf(stderr, "Killed with signal %d\n", WTERMSIG(status));  
             elapsed = -1;
+	    if (Rcommand != NULL){
+		free(Rcommand);	  
+	    }
             free(node->command);
             free(node);
         }
@@ -212,7 +205,7 @@ int main() {
                 }
                 argument_list[i] = NULL;
 
-                free(Rcommand);
+//                free(Rcommand);
 
                 int result = execvp(argument_list[0], argument_list);
 
