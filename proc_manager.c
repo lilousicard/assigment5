@@ -81,6 +81,7 @@ int main() {
     int pid;
     int index = 0;
     size_t len = 100;
+    char *Rcommand = NULL;
     char* command = (char*) malloc(sizeof (char)*len);
     while ( getline(&command, &len, stdin) != -1) {
         command[strlen(command)-1] = 0;
@@ -154,10 +155,13 @@ int main() {
         fflush(NULL);
         printf("Finished at %ld, runtime duration = %f \n", node->finish.tv_sec,elapsed);
         fflush(NULL);
-        char *Rcommand;
+        //char *Rcommand;
         if (WIFEXITED(status)) {
             fprintf(stderr, "Exited with exitcode = %d\n", WEXITSTATUS(status));
 	    if(elapsed>2) {
+		if (Rcommand != NULL){
+                	free(Rcommand);
+            	}
 		Rcommand = strdup(node->command);}
 	    else if (Rcommand != NULL){
 		free(Rcommand);	  
