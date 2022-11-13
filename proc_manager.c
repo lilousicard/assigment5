@@ -3,7 +3,7 @@
  * in various file.
  * Author name: Lilou Sicard-Noel
  * Author email: lilou.sicard-noel@sjsu.edu
- * Last modified date: 10/12/2022
+ * Last modified date: 11/12/2022
  * Creation date: 11/04/2022
  * GitHub Repo : https://github.com/lilousicard/assigment5
  **/
@@ -112,7 +112,7 @@ int main() {
             int fderr = open(fileE, O_RDWR|O_CREAT|O_APPEND,0777);
             dup2(fdout, 1);
             dup2(fderr, 2);
-
+            printf("%s\n", command);
             char *argument_list[10];    
             int i = 0;
             fflush(stdout);
