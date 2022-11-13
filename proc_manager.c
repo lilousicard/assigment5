@@ -168,20 +168,20 @@ int main() {
         fflush(NULL);
         printf("Finished at %ld, runtime duration = %f \n", node->finish.tv_sec,elapsed);
         fflush(NULL);
+        char *Rcommand;
         if (WIFEXITED(status)) {
             fprintf(stderr, "Exited with exitcode = %d\n", WEXITSTATUS(status));
+            if(elapsed>2) Rcommand = strdup(node->command);
+            free(node->command);
+            free(node);
         } else if (WIFSIGNALED(status)) {
             fprintf(stderr, "Killed with signal %d\n", WTERMSIG(status));  
             elapsed = -1;
-            free(lookup(pidChild)->command);
-            free(lookup(pidChild));
+            free(node->command);
+            free(node);
         }
         if (elapsed>2){
-            char *Rcommand = strdup(node->command);
             index = 1;
-	    //free terminated node
-	    free(node->command);
-	    free(node);
             struct timespec start;
             clock_gettime(CLOCK_MONOTONIC, &start);
             pid = fork();
@@ -203,16 +203,16 @@ int main() {
                 fflush(stdout);
 
 
-                char* Ccommand = strdup(Rcommand);
-		free(Rcommand);
-                char *p = strtok(Ccommand," ");
+                //char* Ccommand = strdup(Rcommand);
+		        //free(Rcommand);
+                char *p = strtok(Rcommand," ");
                 while (p != NULL){
                     argument_list[i++] = p;
                     p = strtok (NULL, " ");
                 }
                 argument_list[i] = NULL;
 
-                free(Ccommand);
+                free(Rcommand);
 
                 int result = execvp(argument_list[0], argument_list);
 
@@ -223,7 +223,7 @@ int main() {
                 exit(0);
             } else if (pid > 0) {  /* parent goes to the next node */
                 //insert the new pid into the hash table
-                struct nlist *entry_new = insert(command,pid,index);
+                struct nlist *entry_new = insert(Rcommand,pid,index);
                 clock_gettime(CLOCK_MONOTONIC, &entry_new->start);
                 char fileO[10];
                 char fileE[10];
@@ -241,8 +241,6 @@ int main() {
         }//End of Restart process
         else if (elapsed>0){ //Process do not restart
             fprintf(stderr,"spawning too fast\n");
-	    free(lookup(pidChild)->command);
-            free(lookup(pidChild));
         }
     }
 
