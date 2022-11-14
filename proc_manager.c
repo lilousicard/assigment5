@@ -3,7 +3,7 @@
  * in various file.
  * Author name: Lilou Sicard-Noel and Kobern Dare
  * Author email: lilou.sicard-noel@sjsu.edu && kobern.dare@sjsu.edu
- * Last modified date: 11/13/2022
+ * Last modified date: 11/14/2022
  * Creation date: 11/04/2022
  * GitHub Repo : https://github.com/lilousicard/assigment5
  **/
@@ -162,11 +162,11 @@ int main() {
         if(node != NULL){
             clock_gettime(CLOCK_MONOTONIC, &node->finish);
             double elapsed = (node->finish.tv_sec - node->start.tv_sec);
+            elapsed += (node->finish.tv_nsec - node->start.tv_nsec)/1000000000.0;
             printf("Ending command INDEX %d: child PID %d of parent PPID %d.\n", node->index, node->pid, getpid());
             fflush(NULL);
             printf("Finished at %ld, runtime duration = %f \n", node->finish.tv_sec, elapsed);
             fflush(NULL);
-            //char *Rcommand;
             if (WIFEXITED(status)) {//Command Exited with a code
                 fprintf(stderr, "Exited with exitcode = %d\n", WEXITSTATUS(status));
                 //Need to Restart Process
@@ -183,8 +183,12 @@ int main() {
                 free(node);
             } else if (WIFSIGNALED(status)) { //Command was killed
                 fprintf(stderr, "Killed with signal %d\n", WTERMSIG(status));
-                elapsed = -1;
-                if (Rcommand != NULL) {
+                if (elapsed > 2) {
+                    if (Rcommand != NULL) {
+                            free(Rcommand);
+                    }
+                    Rcommand = strdup(node->command);
+		        } else  if (Rcommand != NULL) {
                     free(Rcommand);
                 }
                 free(node->command);
