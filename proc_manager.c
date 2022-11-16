@@ -78,7 +78,7 @@ int main() {
     int pid;
     int index = 0;
     size_t len = 100;
-    char *Rcommand = NULL;
+    char *Rcommand = (char *) malloc(sizeof(char) * len);
     char *command = (char *) malloc(sizeof(char) * len);
 
     //Start Getting the lines from the file or stdin
@@ -169,31 +169,16 @@ int main() {
             fflush(NULL);
             if (WIFEXITED(status)) {//Command Exited with a code
                 fprintf(stderr, "Exited with exitcode = %d\n", WEXITSTATUS(status));
-                //Need to Restart Process
-                if (elapsed > 2) {
-                    if (Rcommand != NULL) {
-                        free(Rcommand);
-                    }
-                    Rcommand = strdup(node->command);
-                } else if (Rcommand != NULL) {
-                    //Do not need to restart process
-                    free(Rcommand);
-                }
-                free(node->command);
-                free(node);
             } else if (WIFSIGNALED(status)) { //Command was killed
                 fprintf(stderr, "Killed with signal %d\n", WTERMSIG(status));
-                if (elapsed > 2) {
-                    if (Rcommand != NULL) {
-                            free(Rcommand);
-                    }
-                    Rcommand = strdup(node->command);
-		        } else  if (Rcommand != NULL) {
-                    free(Rcommand);
-                }
-                free(node->command);
-                free(node);
             }
+
+            if (elapsed>2){
+                strcpy(Rcommand,node->command);
+            }
+
+            free(node->command);
+            free(node);
             if (elapsed > 2) { //Restart process
                 index = 1;
                 struct timespec start;
@@ -254,5 +239,6 @@ int main() {
         }//End of if(node!=NULL)
     }//End of While(Wait) loop
     free(command);
+    free(Rcommand);
     return 0;
 }
